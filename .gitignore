@@ -1,0 +1,20 @@
+# Ignore everything.
+**
+
+# But include these files...
+!.gitignore
+!LICENSE
+!README.md
+
+# ... and these files under the 'video-storage' directory...
+!video-storage/
+video-storage/*
+!video-storage/.dockerignore
+!video-storage/Dockerfile-dev
+!video-storage/Dockerfile-prod
+!video-storage/package.json
+!video-storage/package-lock.json
+# ... and these directories...
+!video-storage/src
+video-storage/src/*
+!video-storage/src/index.js
