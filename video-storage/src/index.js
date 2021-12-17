@@ -19,7 +19,7 @@ const app = express();
 const BUCKET_NAME = process.env.BUCKET_NAME;
 const API_KEY = process.env.API_KEY;
 const ENDPOINT = process.env.ENDPOINT;
-const HMAC_ACCESS_KEY_ID = processe.env.HMAC_ACCESS_KEY_ID;
+const HMAC_ACCESS_KEY_ID = process.env.HMAC_ACCESS_KEY_ID;
 const HMAC_SECRET_ACCESS_KEY = process.env.HMAC_SECRET_ACCESS_KEY;
 //Service credentials -> copy.
 const SERVICE_INSTANCE_ID = process.env.SERVICE_INSTANCE_ID;
