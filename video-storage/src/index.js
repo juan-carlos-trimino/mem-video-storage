@@ -19,6 +19,8 @@ const app = express();
 const BUCKET_NAME = process.env.BUCKET_NAME;
 const API_KEY = process.env.API_KEY;
 const ENDPOINT = process.env.ENDPOINT;
+const HMAC_ACCESS_KEY_ID = processe.env.HMAC_ACCESS_KEY_ID;
+const HMAC_SECRET_ACCESS_KEY = process.env.HMAC_SECRET_ACCESS_KEY;
 //Service credentials -> copy.
 const SERVICE_INSTANCE_ID = process.env.SERVICE_INSTANCE_ID;
 const SIGNATURE_VERSION = process.env.SIGNATURE_VERSION;
@@ -28,8 +30,8 @@ let READINESS_PROBE = false;
 const CONFIG = {
   endpoint: ENDPOINT,
   apiKeyId: API_KEY,
-  //accessKeyId: ACCESS_KEY_ID,
-  //secretAccessKey: SECRET_ACCESS_KEY,
+  accessKeyId: HMAC_ACCESS_KEY_ID,
+  secretAccessKey: HMAC_SECRET_ACCESS_KEY,
   serviceInstanceId: SERVICE_INSTANCE_ID,
   //ibmAuthEndpoint: "https://iam.cloud.ibm.com/identity/token",
   region: REGION
@@ -75,6 +77,14 @@ function main()
   else if (!process.env.REGION)
   {
     throw new Error("Please specify the region in the environment variable REGION.");
+  }
+  else if (!process.env.HMAC_SECRET_ACCESS_KEY)
+  {
+    throw new Error("Please specify the HMAC secret access key in the environment variable HMAC_SECRET_ACCESS_KEY.");
+  }
+  else if (!process.env.HMAC_ACCESS_KEY_ID)
+  {
+    throw new Error("Please specify the HMAC access key id in the environment variable HMAC_ACCESS_KEY_ID.");
   }
   else if (!process.env.ENDPOINT)
   {
