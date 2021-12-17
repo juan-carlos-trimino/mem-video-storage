@@ -22,6 +22,7 @@ const ENDPOINT = process.env.ENDPOINT;
 //Service credentials -> copy.
 const SERVICE_INSTANCE_ID = process.env.SERVICE_INSTANCE_ID;
 const SIGNATURE_VERSION = process.env.SIGNATURE_VERSION;
+const REGION = process.env.REGION;
 const PORT = process.env.PORT && parseInt(process.env.PORT) || 3000;
 let READINESS_PROBE = false;
 const CONFIG = {
@@ -31,7 +32,7 @@ const CONFIG = {
   //secretAccessKey: SECRET_ACCESS_KEY,
   serviceInstanceId: SERVICE_INSTANCE_ID,
   //ibmAuthEndpoint: "https://iam.cloud.ibm.com/identity/token",
-  region: 'us-south'
+  region: REGION
   //signatureVersion: SIGNATURE_VERSION
 };
 const client = new cos.S3(CONFIG);
@@ -70,6 +71,10 @@ function main()
   else if (!process.env.BUCKET_NAME)
   {
     throw new Error("Please specify the bucket name of an IBM Cloud Object Storage account in the environment variable BUCKET_NAME.");
+  }
+  else if (!process.env.REGION)
+  {
+    throw new Error("Please specify the region in the environment variable REGION.");
   }
   else if (!process.env.ENDPOINT)
   {
