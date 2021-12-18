@@ -30,11 +30,11 @@ let READINESS_PROBE = false;
 const CONFIG = {
   endpoint: ENDPOINT,
   apiKeyId: API_KEY,
-  accessKeyId: HMAC_ACCESS_KEY_ID,
-  secretAccessKey: HMAC_SECRET_ACCESS_KEY,
+  // accessKeyId: HMAC_ACCESS_KEY_ID,
+  // secretAccessKey: HMAC_SECRET_ACCESS_KEY,
   serviceInstanceId: SERVICE_INSTANCE_ID,
   //ibmAuthEndpoint: "https://iam.cloud.ibm.com/identity/token",
-  region: REGION
+  // region: REGION
   //signatureVersion: SIGNATURE_VERSION
 };
 const client = new cos.S3(CONFIG);
