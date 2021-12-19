@@ -28,13 +28,13 @@ const REGION = process.env.REGION;
 const PORT = process.env.PORT && parseInt(process.env.PORT) || 3000;
 let READINESS_PROBE = false;
 const CONFIG = {
-  endpoint: ENDPOINT,
-  apiKeyId: API_KEY,
-  // accessKeyId: HMAC_ACCESS_KEY_ID,
-  // secretAccessKey: HMAC_SECRET_ACCESS_KEY,
-  serviceInstanceId: SERVICE_INSTANCE_ID,
+  //endpoint: ENDPOINT,
+  //apiKeyId: API_KEY,
+  accessKeyId: HMAC_ACCESS_KEY_ID,
+  secretAccessKey: HMAC_SECRET_ACCESS_KEY,
+  //serviceInstanceId: SERVICE_INSTANCE_ID,
   //ibmAuthEndpoint: "https://iam.cloud.ibm.com/identity/token",
-  // region: REGION
+  region: REGION
   //signatureVersion: SIGNATURE_VERSION
 };
 const client = new cos.S3(CONFIG);
@@ -107,8 +107,8 @@ function main()
     }
   }
   //For debugging...
-  //console.log(require('util').inspect(CONFIG));
-  //console.log(require('util').inspect(client.config));
+  console.log(require('util').inspect(CONFIG));
+  console.log(require('util').inspect(client.config));
   //Notify when server has started.
   return new Promise(resolve =>
   {
