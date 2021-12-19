@@ -28,15 +28,15 @@ const REGION = process.env.REGION;
 const PORT = process.env.PORT && parseInt(process.env.PORT) || 3000;
 let READINESS_PROBE = false;
 const CONFIG = {
-  credentials: {
+  //credentials: {
     accessKeyId: HMAC_ACCESS_KEY_ID,
-    secretAccessKey: HMAC_SECRET_ACCESS_KEY
-  },
-  endpoint: ENDPOINT,
+    secretAccessKey: HMAC_SECRET_ACCESS_KEY,
+  //},
+  region: REGION,
+  endpoint: ENDPOINT
 //  apiKeyId: API_KEY,
   //serviceInstanceId: SERVICE_INSTANCE_ID,
   //ibmAuthEndpoint: "https://iam.cloud.ibm.com/identity/token",
-  region: REGION
   //signatureVersion: SIGNATURE_VERSION
 };
 const client = new cos.S3(CONFIG);
