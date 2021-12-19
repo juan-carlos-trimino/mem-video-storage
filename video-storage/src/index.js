@@ -32,7 +32,7 @@ const CONFIG = {
   accessKeyId: HMAC_ACCESS_KEY_ID,
   secretAccessKey: HMAC_SECRET_ACCESS_KEY,
   region: REGION,
- // endpoint: ENDPOINT
+  endpoint: ENDPOINT
 
   // apiKeyId: API_KEY,
   // serviceInstanceId: SERVICE_INSTANCE_ID,
