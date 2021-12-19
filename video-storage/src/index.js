@@ -28,14 +28,15 @@ const REGION = process.env.REGION;
 const PORT = process.env.PORT && parseInt(process.env.PORT) || 3000;
 let READINESS_PROBE = false;
 const CONFIG = {
-  // accessKeyId: HMAC_ACCESS_KEY_ID,
-  // secretAccessKey: HMAC_SECRET_ACCESS_KEY,
-  // region: REGION,
-  // endpoint: ENDPOINT
+  apiVersion: 'latest',
+  accessKeyId: HMAC_ACCESS_KEY_ID,
+  secretAccessKey: HMAC_SECRET_ACCESS_KEY,
+  region: REGION,
+ // endpoint: ENDPOINT
 
-  apiKeyId: API_KEY,
-  serviceInstanceId: SERVICE_INSTANCE_ID,
-  endpoint: ENDPOINT
+  // apiKeyId: API_KEY,
+  // serviceInstanceId: SERVICE_INSTANCE_ID,
+  // endpoint: ENDPOINT
 };
 const client = new cos.S3(CONFIG);
 
