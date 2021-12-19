@@ -28,8 +28,8 @@ const REGION = process.env.REGION;
 const PORT = process.env.PORT && parseInt(process.env.PORT) || 3000;
 let READINESS_PROBE = false;
 const CONFIG = {
-  //endpoint: ENDPOINT,
-  //apiKeyId: API_KEY,
+  endpoint: ENDPOINT,
+  apiKeyId: API_KEY,
   accessKeyId: HMAC_ACCESS_KEY_ID,
   secretAccessKey: HMAC_SECRET_ACCESS_KEY,
   //serviceInstanceId: SERVICE_INSTANCE_ID,
