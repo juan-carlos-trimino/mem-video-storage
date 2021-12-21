@@ -25,7 +25,7 @@ const HMAC_ACCESS_KEY_ID = process.env.HMAC_ACCESS_KEY_ID;
 const HMAC_SECRET_ACCESS_KEY = process.env.HMAC_SECRET_ACCESS_KEY;
 //Service credentials -> copy.
 const SERVICE_INSTANCE_ID = process.env.SERVICE_INSTANCE_ID;
-const SIGNATURE_VERSION = process.env.SIGNATURE_VERSION;
+// const SIGNATURE_VERSION = process.env.SIGNATURE_VERSION;
 const REGION = process.env.REGION;
 const PORT = process.env.PORT && parseInt(process.env.PORT) || 3000;
 let READINESS_PROBE = false;
