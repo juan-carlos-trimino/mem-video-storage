@@ -17,7 +17,7 @@ Globals
 //Create a new express instance.
 const app = express();
 const BUCKET_NAME = process.env.BUCKET_NAME;
-const HMAC = process.env.HMAC;
+const USE_HMAC = process.env.USE_HMAC;
 
 const API_KEY = process.env.API_KEY;
 const ENDPOINT = process.env.ENDPOINT;
@@ -29,7 +29,7 @@ const SERVICE_INSTANCE_ID = process.env.SERVICE_INSTANCE_ID;
 const REGION = process.env.REGION;
 const PORT = process.env.PORT && parseInt(process.env.PORT) || 3000;
 let READINESS_PROBE = false;
-const CONFIG = HMAC === "true" ?
+const CONFIG = USE_HMAC.toLowerCase() === "yes" ?
                 {
                   apiVersion: 'latest',
                   accessKeyId: HMAC_ACCESS_KEY_ID,
@@ -76,11 +76,11 @@ function main()
   {
     throw new Error("Please specify the bucket name of an IBM Cloud Object Storage account in the environment variable BUCKET_NAME.");
   }
-  else if (!process.env.HMAC)
+  else if (!process.env.USE_HMAC)
   {
-    throw new Error("Please specify HMAC in the environment variable HMAC.");
+    throw new Error("Please specify the usage of HMAC in the environment variable USE_HMAC.");
   }
-  else if (HMAC === "true")
+  else if (USE_HMAC.toLowerCase() === "yes")
   {
     if (!process.env.REGION)
     {
