@@ -84,7 +84,8 @@ function main()
   {
     if (!process.env.REGION)
     {
-      throw new Error("Please specify the region in the environment variable REGION.");
+//      throw new Error("Please specify the region in the environment variable REGION.");
+      throw new Error(`${USE_HMAC}  -- Please specify the region in the environment variable REGION.`);
     }
     else if (!process.env.HMAC_SECRET_ACCESS_KEY)
     {
