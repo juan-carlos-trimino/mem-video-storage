@@ -40,8 +40,8 @@ const CONFIG = HMAC === "true" ?
                 {
                   apiVersion: 'latest',
                   apiKeyId: API_KEY,
-                  serviceInstanceId: SERVICE_INSTANCE_ID
-                  //endpoint: ENDPOINT
+                  serviceInstanceId: SERVICE_INSTANCE_ID,
+                  endpoint: ENDPOINT
                 };
 const client = new cos.S3(CONFIG);
 
