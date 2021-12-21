@@ -77,7 +77,7 @@ function main()
   {
     throw new Error("Please specify HMAC in the environment variable HMAC.");
   }
-  else if (HMAC == true)
+  else if (HMAC === "true")
   {
     if (!process.env.REGION)
     {
