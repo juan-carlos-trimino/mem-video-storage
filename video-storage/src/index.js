@@ -41,6 +41,7 @@ const CONFIG = USE_HMAC.toLowerCase() === "yes" ?
                   apiVersion: 'latest',
                   apiKeyId: API_KEY,
                   serviceInstanceId: SERVICE_INSTANCE_ID,
+                  region: REGION,
                   endpoint: ENDPOINT
                 };
 const client = new cos.S3(CONFIG);
@@ -114,6 +115,12 @@ function main()
     {
       throw new Error("Please specify the endpoint for the IBM Cloud Object Storage account in the environment variable ENDPOINT.");
     }
+    else if (!process.env.REGION)
+    {
+//      throw new Error("Please specify the region in the environment variable REGION.");
+      throw new Error(`${USE_HMAC}  -- Please specify the region in the environment variable REGION.`);
+    }
+
 //    else if (!process.env.SIGNATURE_VERSION)
 //    {
 //      throw new Error("Please specify the signature version for the IBM Cloud Object Storage account in the environment variable SIGNATURE_VERSION.");
