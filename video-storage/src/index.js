@@ -29,17 +29,20 @@ const SIGNATURE_VERSION = process.env.SIGNATURE_VERSION;
 const REGION = process.env.REGION;
 const PORT = process.env.PORT && parseInt(process.env.PORT) || 3000;
 let READINESS_PROBE = false;
-const CONFIG = {
-  apiVersion: 'latest',
-  accessKeyId: HMAC_ACCESS_KEY_ID,
-  secretAccessKey: HMAC_SECRET_ACCESS_KEY,
-  region: REGION,
-  endpoint: ENDPOINT
-
-  // apiKeyId: API_KEY,
-  // serviceInstanceId: SERVICE_INSTANCE_ID,
-  // endpoint: ENDPOINT
-};
+const CONFIG = HMAC === "true" ?
+                {
+                  apiVersion: 'latest',
+                  accessKeyId: HMAC_ACCESS_KEY_ID,
+                  secretAccessKey: HMAC_SECRET_ACCESS_KEY,
+                  region: REGION,
+                  endpoint: ENDPOINT
+                } :
+                {
+                  apiVersion: 'latest',
+                  apiKeyId: API_KEY,
+                  serviceInstanceId: SERVICE_INSTANCE_ID
+                  //endpoint: ENDPOINT
+                };
 const client = new cos.S3(CONFIG);
 
 /***
@@ -105,6 +108,10 @@ function main()
     else if (!process.env.SERVICE_INSTANCE_ID)
     {
       throw new Error("Please specify the service instance Id for the IBM Cloud Object Storage account in the environment variable SERVICE_INSTANCE_ID.");
+    }
+    else if (!process.env.ENDPOINT)
+    {
+      throw new Error("Please specify the endpoint for the IBM Cloud Object Storage account in the environment variable ENDPOINT.");
     }
 //    else if (!process.env.SIGNATURE_VERSION)
 //    {
