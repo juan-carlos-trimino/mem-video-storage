@@ -17,6 +17,8 @@ Globals
 //Create a new express instance.
 const app = express();
 const BUCKET_NAME = process.env.BUCKET_NAME;
+const HMAC = process.env.HMAC;
+
 const API_KEY = process.env.API_KEY;
 const ENDPOINT = process.env.ENDPOINT;
 const HMAC_ACCESS_KEY_ID = process.env.HMAC_ACCESS_KEY_ID;
@@ -67,45 +69,52 @@ if (require.main === module)
 function main()
 {
   //Throw an exception if any required environment variables are missing.
-  if (!process.env.API_KEY)
-  {
-    throw new Error("Please specify the API key of an IBM Cloud Object Storage account in the environment variable API_KEY.");
-  }
-  else if (!process.env.BUCKET_NAME)
+  if (!process.env.BUCKET_NAME)
   {
     throw new Error("Please specify the bucket name of an IBM Cloud Object Storage account in the environment variable BUCKET_NAME.");
   }
-  else if (!process.env.REGION)
+  else if (!process.env.HMAC)
   {
-    throw new Error("Please specify the region in the environment variable REGION.");
+    throw new Error("Please specify HMAC in the environment variable HMAC.");
   }
-  else if (!process.env.HMAC_SECRET_ACCESS_KEY)
+  else if (HMAC == true)
   {
-    throw new Error("Please specify the HMAC secret access key in the environment variable HMAC_SECRET_ACCESS_KEY.");
+    if (!process.env.REGION)
+    {
+      throw new Error("Please specify the region in the environment variable REGION.");
+    }
+    else if (!process.env.HMAC_SECRET_ACCESS_KEY)
+    {
+      throw new Error("Please specify the HMAC secret access key in the environment variable HMAC_SECRET_ACCESS_KEY.");
+    }
+    else if (!process.env.HMAC_ACCESS_KEY_ID)
+    {
+      throw new Error("Please specify the HMAC access key id in the environment variable HMAC_ACCESS_KEY_ID.");
+    }
+    else if (!process.env.ENDPOINT)
+    {
+      throw new Error("Please specify the endpoint for the IBM Cloud Object Storage account in the environment variable ENDPOINT.");
+    }
   }
-  else if (!process.env.HMAC_ACCESS_KEY_ID)
-  {
-    throw new Error("Please specify the HMAC access key id in the environment variable HMAC_ACCESS_KEY_ID.");
-  }
-  else if (!process.env.ENDPOINT)
-  {
-    throw new Error("Please specify the endpoint for the IBM Cloud Object Storage account in the environment variable ENDPOINT.");
-  }
-  else if (!process.env.SERVICE_INSTANCE_ID)
-  {
-    throw new Error("Please specify the service instance Id for the IBM Cloud Object Storage account in the environment variable SERVICE_INSTANCE_ID.");
-  }
-  else if (!process.env.SIGNATURE_VERSION)
-  {
-    throw new Error("Please specify the signature version for the IBM Cloud Object Storage account in the environment variable SIGNATURE_VERSION.");
-  }
-  //Display a message if any optional environment variables are missing.
   else
   {
-    if (process.env.PORT === undefined)
+    if (!process.env.API_KEY)
     {
-      console.log('The environment variable PORT for the "HTTP server" is missing; using port 3000.');
+      throw new Error("Please specify the API key of an IBM Cloud Object Storage account in the environment variable API_KEY.");
     }
+    else if (!process.env.SERVICE_INSTANCE_ID)
+    {
+      throw new Error("Please specify the service instance Id for the IBM Cloud Object Storage account in the environment variable SERVICE_INSTANCE_ID.");
+    }
+//    else if (!process.env.SIGNATURE_VERSION)
+//    {
+//      throw new Error("Please specify the signature version for the IBM Cloud Object Storage account in the environment variable SIGNATURE_VERSION.");
+//    }
+  }
+  //Display a message if any optional environment variables are missing.
+  if (process.env.PORT === undefined)
+  {
+    console.log('The environment variable PORT for the "HTTP server" is missing; using port 3000.');
   }
   //For debugging...
   console.log(require('util').inspect(CONFIG));
