@@ -30,18 +30,21 @@ const REGION = process.env.REGION;
 const PORT = process.env.PORT && parseInt(process.env.PORT) || 3000;
 let READINESS_PROBE = false;
 const CONFIG = USE_HMAC.toLowerCase() === "yes" ?
-                {
-                  apiVersion: 'latest',
+                {//for services that use HMAC credentials for authentication
+                  apiVersion: 'latest',  //Use the latest possible version.
                   accessKeyId: HMAC_ACCESS_KEY_ID,
                   secretAccessKey: HMAC_SECRET_ACCESS_KEY,
                   region: REGION,
                   endpoint: ENDPOINT
                 } :
-                {
+                {//for services that use IAM authentication)
                   apiVersion: 'latest',
-                  apiKey: API_KEY,
-                  resourceInstanceId: SERVICE_INSTANCE_ID,
-                 // region: REGION,
+//                  apiKey: API_KEY,
+                  apiKeyId: API_KEY,
+//                  resourceInstanceId: SERVICE_INSTANCE_ID,
+                  serviceInstanceId: SERVICE_INSTANCE_ID,
+                  signatureVersion: 'iam',
+                  //region: REGION,
                  endpoint: ENDPOINT
                 };
 const client = new cos.S3(CONFIG);
