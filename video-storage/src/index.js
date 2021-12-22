@@ -32,10 +32,14 @@ let READINESS_PROBE = false;
 const CONFIG = USE_HMAC.toLowerCase() === "yes" ?
                 {
                   apiVersion: 'latest',
-                  accessKeyId: HMAC_ACCESS_KEY_ID,
-                  secretAccessKey: HMAC_SECRET_ACCESS_KEY,
-                  region: REGION,
-                  endpointUrl: ENDPOINT
+                  credentials: {
+                    accessKeyId: HMAC_ACCESS_KEY_ID,
+                    secretAccessKey: HMAC_SECRET_ACCESS_KEY,
+                    region: REGION
+                  },
+                  endpoint: {
+                    endpointUrl: ENDPOINT
+                  }
                 } :
                 {
                   apiVersion: 'latest',
