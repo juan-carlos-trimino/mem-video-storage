@@ -39,9 +39,9 @@ const CONFIG = USE_HMAC.toLowerCase() === "yes" ?
                 } :
                 {
                   apiVersion: 'latest',
-                  apiKeyId: API_KEY,
-                  serviceInstanceId: SERVICE_INSTANCE_ID,
-                  region: REGION,
+                  apiKey: API_KEY,
+                  resourceInstanceId: SERVICE_INSTANCE_ID,
+                 // region: REGION,
                   endpoint: ENDPOINT
                 };
 const client = new cos.S3(CONFIG);
