@@ -46,6 +46,29 @@ const CONFIG = AUTHENTICATION_TYPE.toLowerCase() === 'hmac' ?
 const client = new cos.S3(CONFIG);
 
 /***
+Resume Operation
+----------------
+The resume operation strategy intercepts unexpected errors and responds by allowing the process to
+continue.
+***/
+process.on("uncaughtException",
+err => {
+  console.error("Uncaught exception:");
+  console.error(err && err.stack || err);
+})
+
+/***
+Abort and Restart
+-----------------
+***/
+// process.on("uncaughtException",
+// err => {
+//   console.error("Uncaught exception:");
+//   console.error(err && err.stack || err);
+//   process.exit(1);
+// })
+
+/***
 Unlike most other programming languages or runtime environments, Node.js doesn't have a built-in
 special "main" function to designate the entry point of a program.
 
@@ -54,80 +77,62 @@ Accessing the main module
 When a file is run directly from Node.js, require.main is set to its module. That means that it is
 possible to determine whether a file has been run directly by testing require.main === module.
 ***/
-if (require.main === module)
-{
+if (require.main === module) {
   main()
-  .then(() =>
-  {
+  .then(() => {
     READINESS_PROBE = true;
     console.log(`Microservice "video-storage" is listening on port "${PORT}"!`);
   })
-  .catch(err =>
-  {
+  .catch(err => {
     console.error('Microservice "video-storage" failed to start.');
     console.error(err && err.stack || err);
   });
 }
 
-function main()
-{
+function main() {
   //Throw an exception if any required environment variables are missing.
-  if (!process.env.BUCKET_NAME)
-  {
+  if (!process.env.BUCKET_NAME) {
     throw new Error('Please specify the bucket name of an IBM COS account in the environment variable BUCKET_NAME.');
   }
-  else if (!process.env.ENDPOINT)
-  {
+  else if (!process.env.ENDPOINT) {
     throw new Error('Please specify the endpoint for the IBM COS account in the environment variable ENDPOINT.');
   }
-  else if (!process.env.AUTHENTICATION_TYPE)
-  {
+  else if (!process.env.AUTHENTICATION_TYPE) {
     throw new Error('Please specify the type of authentication to use in the environment variable AUTHENTICATION_TYPE.');
   }
-  else if (AUTHENTICATION_TYPE.toLowerCase() === 'hmac')
-  {
-    if (!process.env.REGION)
-    {
+  else if (AUTHENTICATION_TYPE.toLowerCase() === 'hmac') {
+    if (!process.env.REGION) {
       throw new Error('Please specify the region in the environment variable REGION.');
     }
-    else if (!process.env.SECRET_ACCESS_KEY)
-    {
+    else if (!process.env.SECRET_ACCESS_KEY) {
       throw new Error('Please specify the HMAC secret access key in the environment variable SECRET_ACCESS_KEY.');
     }
-    else if (!process.env.ACCESS_KEY_ID)
-    {
+    else if (!process.env.ACCESS_KEY_ID) {
       throw new Error('Please specify the HMAC access key id in the environment variable ACCESS_KEY_ID.');
     }
   }
-  else if (AUTHENTICATION_TYPE.toLowerCase() === 'iam')
-  {
-    if (!process.env.API_KEY)
-    {
+  else if (AUTHENTICATION_TYPE.toLowerCase() === 'iam') {
+    if (!process.env.API_KEY) {
       throw new Error('Please specify the API key of an IBM COS account in the environment variable API_KEY.');
     }
-    else if (!process.env.SERVICE_INSTANCE_ID)
-    {
+    else if (!process.env.SERVICE_INSTANCE_ID) {
       throw new Error('Please specify the service instance Id for the IBM COS account in the environment variable SERVICE_INSTANCE_ID.');
     }
   }
-  else
-  {
+  else {
     throw new Error(`Unknown authentication type (${AUTHENTICATION_TYPE}).`);
   }
   //Display a message if any optional environment variables are missing.
-  if (process.env.PORT === undefined)
-  {
+  if (process.env.PORT === undefined) {
     console.log('The environment variable PORT for the "HTTP server" is missing; using port 3000.');
   }
   //For debugging...
   //console.log(require('util').inspect(CONFIG));
   //console.log(require('util').inspect(client.config));
   //Notify when server has started.
-  return new Promise(resolve =>
-  {
+  return new Promise(resolve => {
     app.listen(PORT,
-    () =>
-    {
+    () => {
       resolve();  //HTTP server is listening, resolve the promise.
     });
   });
@@ -138,50 +143,41 @@ Route definitions
 ****************/
 //Readiness probe.
 app.get('/readiness',
-(req, res) =>
-{
+(req, res) => {
   res.sendStatus(READINESS_PROBE === true ? 200 : 500);
 });
 
 //HTTP GET route to stream a video from COS.
 app.get("/video",
-(req, res) =>
-{
+(req, res) => {
   const videoId = req.query.id;
-  if (videoId !== undefined)
-  {
+  if (videoId !== undefined) {
     console.log(`Retrieving video from bucket: ${BUCKET_NAME}, key: ${videoId}`);
-    const params =
-    {
+    const params = {
       Bucket: BUCKET_NAME,
       Key: videoId
     };
     client.getObject(params)
     .promise()
-    .then(data =>
-    {
+    .then(data => {
       console.log(`Retrieved ${BUCKET_NAME}/${videoId} with size ${data.ContentLength}`);
       //Headers
       res.set("Content-Length", data.ContentLength)
           .set("Content-Type", data.ContentType);
       res.send(data.Body);
     })
-    .catch(err =>
-    {
-      if (err.code === "NoSuchKey")
-      {
+    .catch(err => {
+      if (err.code === "NoSuchKey") {
         console.error(`${BUCKET_NAME}/${videoId} not found.`);
       }
-      else
-      {
+      else {
         console.error(`Error occurred getting video ${BUCKET_NAME}/${videoId} to stream.`);
         console.error(err.stack);
       }
       res.sendStatus(500);
     });
   }
-  else
-  {
+  else {
     console.log('An "id" term must be provided.');
     res.send({ error: "An 'id' term must be provided." });
   }
@@ -189,14 +185,12 @@ app.get("/video",
 
 //HTTP POST route to upload a video to COS.
 app.post('/upload',
-(req, res) =>
-{
+(req, res) => {
   const videoId = req.headers.id;
   const mimeType = req.headers['content-type'];
   const contentLength = req.headers['content-length'];
   let passThrough = new stream.PassThrough();
-  const params =
-  {
+  const params = {
     Bucket: BUCKET_NAME,
     Key: videoId,
     ContentType: mimeType,
@@ -206,13 +200,11 @@ app.post('/upload',
   console.log(`Uploading video to bucket: ${BUCKET_NAME}, key: ${videoId}, Content-Type: ${mimeType}, Content-Length: ${contentLength}`);
   client.putObject(params)
   .promise()
-  .then(data =>
-  {
+  .then(data => {
     console.log(`Uploaded the video ${videoId}`);
     res.sendStatus(200);
   })
-  .catch(err =>
-  {
+  .catch(err => {
     console.error(`Upload to COS failed for video ${videoId}.`);
     console.error(err);
     res.sendStatus(500);
@@ -228,18 +220,14 @@ work to do; in other words, Express has executed all middleware functions and ro
 that none of them responded. All you need to do is add a middleware function at the VERY BOTTOM of
 the stack (below all other functions) to handle a 404 response.
 ***/
-app.use((req, res, next) =>
-{
+app.use((req, res, next) => {
   console.error(`Unable to find the requested resource (${req.url})!`);
   res.status(404).send(`<h1>Unable to find the requested resource (${req.url})!</h1>`);
 });
 
-function getListOfFiles(prefix)
-{
-  return new Promise((resolve, reject) =>
-  {
-    let params =
-    {
+function getListOfFiles(prefix) {
+  return new Promise((resolve, reject) => {
+    let params = {
       Bucket: BUCKET_NAME,
       MaxKeys: 1000,
       Prefix: prefix,
@@ -247,30 +235,23 @@ function getListOfFiles(prefix)
     };
     let allKeys = [];
     listAllKeys();
-    function listAllKeys()
-    {
+    function listAllKeys() {
       CLIENT.listObjectsV2(params,
-      (err, data) =>
-      {
-        if (err)
-        {
+      (err, data) => {
+        if (err) {
           console.log(err);
           reject(err)
         }
-        else
-        {
-          data.Contents.forEach(content =>
-          {
+        else {
+          data.Contents.forEach(content => {
             allKeys.push(content.Key);
           });
           //
-          if (data.IsTruncated)
-          {
+          if (data.IsTruncated) {
             params.ContinuationToken = data.NextContinuationToken;
             listAllKeys();
           }
-          else
-          {
+          else {
             resolve(allKeys);
           }
         }
