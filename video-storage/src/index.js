@@ -17,35 +17,31 @@ Globals
 //Create a new express instance.
 const app = express();
 const BUCKET_NAME = process.env.BUCKET_NAME;
-const USE_HMAC = process.env.USE_HMAC;
-
+const AUTHENTICATION_TYPE = process.env.AUTHENTICATION_TYPE;
 const API_KEY = process.env.API_KEY;
 const ENDPOINT = process.env.ENDPOINT;
-const HMAC_ACCESS_KEY_ID = process.env.HMAC_ACCESS_KEY_ID;
-const HMAC_SECRET_ACCESS_KEY = process.env.HMAC_SECRET_ACCESS_KEY;
-//Service credentials -> copy.
+const ACCESS_KEY_ID = process.env.ACCESS_KEY_ID;
+const SECRET_ACCESS_KEY = process.env.SECRET_ACCESS_KEY;
 const SERVICE_INSTANCE_ID = process.env.SERVICE_INSTANCE_ID;
-// const SIGNATURE_VERSION = process.env.SIGNATURE_VERSION;
 const REGION = process.env.REGION;
 const PORT = process.env.PORT && parseInt(process.env.PORT) || 3000;
 let READINESS_PROBE = false;
-const CONFIG = USE_HMAC.toLowerCase() === "yes" ?
-                {//for services that use HMAC credentials for authentication
+const CONFIG = AUTHENTICATION_TYPE.toLowerCase() === 'hmac' ?
+                //For services that use HMAC credentials for authentication.
+                {
                   apiVersion: 'latest',  //Use the latest possible version.
-                  accessKeyId: HMAC_ACCESS_KEY_ID,
-                  secretAccessKey: HMAC_SECRET_ACCESS_KEY,
+                  accessKeyId: ACCESS_KEY_ID,
+                  secretAccessKey: SECRET_ACCESS_KEY,
                   region: REGION,
                   endpoint: ENDPOINT
                 } :
-                {//for services that use IAM authentication)
+                //For services that use IAM authentication.
+                {
                   apiVersion: 'latest',
-//                  apiKey: API_KEY,
                   apiKeyId: API_KEY,
-//                  resourceInstanceId: SERVICE_INSTANCE_ID,
                   serviceInstanceId: SERVICE_INSTANCE_ID,
-                  signatureVersion: 'iam',
-                  //region: REGION,
-                 endpoint: ENDPOINT
+                  //signatureVersion: 'iam',
+                  endpoint: ENDPOINT
                 };
 const client = new cos.S3(CONFIG);
 
@@ -78,56 +74,45 @@ function main()
   //Throw an exception if any required environment variables are missing.
   if (!process.env.BUCKET_NAME)
   {
-    throw new Error("Please specify the bucket name of an IBM Cloud Object Storage account in the environment variable BUCKET_NAME.");
+    throw new Error('Please specify the bucket name of an IBM COS account in the environment variable BUCKET_NAME.');
   }
-  else if (!process.env.USE_HMAC)
+  else if (!process.env.ENDPOINT)
   {
-    throw new Error("Please specify the usage of HMAC in the environment variable USE_HMAC.");
+    throw new Error('Please specify the endpoint for the IBM COS account in the environment variable ENDPOINT.');
   }
-  else if (USE_HMAC.toLowerCase() === "yes")
+  else if (!process.env.AUTHENTICATION_TYPE)
+  {
+    throw new Error('Please specify the type of authentication to use in the environment variable AUTHENTICATION_TYPE.');
+  }
+  else if (AUTHENTICATION_TYPE.toLowerCase() === 'hmac')
   {
     if (!process.env.REGION)
     {
-//      throw new Error("Please specify the region in the environment variable REGION.");
-      throw new Error(`${USE_HMAC}  -- Please specify the region in the environment variable REGION.`);
+      throw new Error('Please specify the region in the environment variable REGION.');
     }
-    else if (!process.env.HMAC_SECRET_ACCESS_KEY)
+    else if (!process.env.SECRET_ACCESS_KEY)
     {
-      throw new Error("Please specify the HMAC secret access key in the environment variable HMAC_SECRET_ACCESS_KEY.");
+      throw new Error('Please specify the HMAC secret access key in the environment variable SECRET_ACCESS_KEY.');
     }
-    else if (!process.env.HMAC_ACCESS_KEY_ID)
+    else if (!process.env.ACCESS_KEY_ID)
     {
-      throw new Error("Please specify the HMAC access key id in the environment variable HMAC_ACCESS_KEY_ID.");
+      throw new Error('Please specify the HMAC access key id in the environment variable ACCESS_KEY_ID.');
     }
-    else if (!process.env.ENDPOINT)
+  }
+  else if (AUTHENTICATION_TYPE.toLowerCase() === 'iam')
+  {
+    if (!process.env.API_KEY)
     {
-      throw new Error("Please specify the endpoint for the IBM Cloud Object Storage account in the environment variable ENDPOINT.");
+      throw new Error('Please specify the API key of an IBM COS account in the environment variable API_KEY.');
+    }
+    else if (!process.env.SERVICE_INSTANCE_ID)
+    {
+      throw new Error('Please specify the service instance Id for the IBM COS account in the environment variable SERVICE_INSTANCE_ID.');
     }
   }
   else
   {
-    if (!process.env.API_KEY)
-    {
-      throw new Error("Please specify the API key of an IBM Cloud Object Storage account in the environment variable API_KEY.");
-    }
-    else if (!process.env.SERVICE_INSTANCE_ID)
-    {
-      throw new Error("Please specify the service instance Id for the IBM Cloud Object Storage account in the environment variable SERVICE_INSTANCE_ID.");
-    }
-    else if (!process.env.ENDPOINT)
-    {
-      throw new Error("Please specify the endpoint for the IBM Cloud Object Storage account in the environment variable ENDPOINT.");
-    }
-    else if (!process.env.REGION)
-    {
-//      throw new Error("Please specify the region in the environment variable REGION.");
-      throw new Error(`${USE_HMAC}  -- Please specify the region in the environment variable REGION.`);
-    }
-
-//    else if (!process.env.SIGNATURE_VERSION)
-//    {
-//      throw new Error("Please specify the signature version for the IBM Cloud Object Storage account in the environment variable SIGNATURE_VERSION.");
-//    }
+    throw new Error(`Unknown authentication type (${AUTHENTICATION_TYPE}).`);
   }
   //Display a message if any optional environment variables are missing.
   if (process.env.PORT === undefined)
@@ -135,8 +120,8 @@ function main()
     console.log('The environment variable PORT for the "HTTP server" is missing; using port 3000.');
   }
   //For debugging...
-  console.log(require('util').inspect(CONFIG));
-  console.log(require('util').inspect(client.config));
+  //console.log(require('util').inspect(CONFIG));
+  //console.log(require('util').inspect(client.config));
   //Notify when server has started.
   return new Promise(resolve =>
   {
