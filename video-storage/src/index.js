@@ -93,33 +93,25 @@ function main() {
   //Throw an exception if any required environment variables are missing.
   if (!process.env.BUCKET_NAME) {
     throw new Error('Please specify the bucket name of an IBM COS account in the environment variable BUCKET_NAME.');
-  }
-  else if (!process.env.ENDPOINT) {
+  } else if (!process.env.ENDPOINT) {
     throw new Error('Please specify the endpoint for the IBM COS account in the environment variable ENDPOINT.');
-  }
-  else if (!process.env.AUTHENTICATION_TYPE) {
+  } else if (!process.env.AUTHENTICATION_TYPE) {
     throw new Error('Please specify the type of authentication to use in the environment variable AUTHENTICATION_TYPE.');
-  }
-  else if (AUTHENTICATION_TYPE.toLowerCase() === 'hmac') {
+  } else if (AUTHENTICATION_TYPE.toLowerCase() === 'hmac') {
     if (!process.env.REGION) {
       throw new Error('Please specify the region in the environment variable REGION.');
-    }
-    else if (!process.env.SECRET_ACCESS_KEY) {
+    } else if (!process.env.SECRET_ACCESS_KEY) {
       throw new Error('Please specify the HMAC secret access key in the environment variable SECRET_ACCESS_KEY.');
-    }
-    else if (!process.env.ACCESS_KEY_ID) {
+    } else if (!process.env.ACCESS_KEY_ID) {
       throw new Error('Please specify the HMAC access key id in the environment variable ACCESS_KEY_ID.');
     }
-  }
-  else if (AUTHENTICATION_TYPE.toLowerCase() === 'iam') {
+  } else if (AUTHENTICATION_TYPE.toLowerCase() === 'iam') {
     if (!process.env.API_KEY) {
       throw new Error('Please specify the API key of an IBM COS account in the environment variable API_KEY.');
-    }
-    else if (!process.env.SERVICE_INSTANCE_ID) {
+    } else if (!process.env.SERVICE_INSTANCE_ID) {
       throw new Error('Please specify the service instance Id for the IBM COS account in the environment variable SERVICE_INSTANCE_ID.');
     }
-  }
-  else {
+  } else {
     throw new Error(`Unknown authentication type (${AUTHENTICATION_TYPE}).`);
   }
   //Display a message if any optional environment variables are missing.
@@ -152,32 +144,35 @@ app.get("/video",
 (req, res) => {
   const videoId = req.query.id;
   if (videoId !== undefined) {
-    console.log(`Retrieving video from bucket: ${BUCKET_NAME}, key: ${videoId}`);
-    const params = {
-      Bucket: BUCKET_NAME,
-      Key: videoId
-    };
-    client.getObject(params)
-    .promise()
-    .then(data => {
-      console.log(`Retrieved ${BUCKET_NAME}/${videoId} with size ${data.ContentLength}`);
-      //Headers
-      res.set("Content-Length", data.ContentLength)
-          .set("Content-Type", data.ContentType);
-      res.send(data.Body);
-    })
-    .catch(err => {
-      if (err.code === "NoSuchKey") {
-        console.error(`${BUCKET_NAME}/${videoId} not found.`);
-      }
-      else {
-        console.error(`Error occurred getting video ${BUCKET_NAME}/${videoId} to stream.`);
-        console.error(err.stack);
-      }
-      res.sendStatus(500);
-    });
-  }
-  else {
+    try {
+      console.log(`Retrieving video from bucket: ${BUCKET_NAME}, key: ${videoId}`);
+      const params = {
+        Bucket: BUCKET_NAME,
+        Key: videoId
+      };
+      client.getObject(params)
+      .promise()
+      .then(data => {
+        console.log(`Retrieved ${BUCKET_NAME}/${videoId} with size ${data.ContentLength}`);
+        //Headers
+        res.set("Content-Length", data.ContentLength)
+            .set("Content-Type", data.ContentType);
+        res.send(data.Body);
+      })
+      .catch(err => {
+        if (err.code === "NoSuchKey") {
+          console.error(`${BUCKET_NAME}/${videoId} not found.`);
+        } else {
+          console.error(`Error occurred getting video ${BUCKET_NAME}/${videoId} to stream.`);
+          console.error(err.stack);
+        }
+        res.sendStatus(500);
+      });
+    } catch (err) {
+      console.error(`Error thrown while retrieving video ${BUCKET_NAME}/${videoId}.`);
+      console.error(err.stack);
+    }
+  } else {
     console.log('An "id" term must be provided.');
     res.send({ error: "An 'id' term must be provided." });
   }
@@ -241,8 +236,7 @@ function getListOfFiles(prefix) {
         if (err) {
           console.log(err);
           reject(err)
-        }
-        else {
+        } else {
           data.Contents.forEach(content => {
             allKeys.push(content.Key);
           });
@@ -250,8 +244,7 @@ function getListOfFiles(prefix) {
           if (data.IsTruncated) {
             params.ContinuationToken = data.NextContinuationToken;
             listAllKeys();
-          }
-          else {
+          } else {
             resolve(allKeys);
           }
         }
