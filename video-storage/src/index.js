@@ -144,34 +144,29 @@ app.get("/video",
 (req, res) => {
   const videoId = req.query.id;
   if (videoId !== undefined) {
-    try {
-      console.log(`Retrieving video from bucket: ${BUCKET_NAME}, key: ${videoId}`);
-      const params = {
-        Bucket: BUCKET_NAME,
-        Key: videoId
-      };
-      client.getObject(params)
-      .promise()
-      .then(data => {
-        console.log(`Retrieved ${BUCKET_NAME}/${videoId} with size ${data.ContentLength}`);
-        //Headers
-        res.set("Content-Length", data.ContentLength)
-            .set("Content-Type", data.ContentType);
-        res.send(data.Body);
-      })
-      .catch(err => {
-        if (err.code === "NoSuchKey") {
-          console.error(`${BUCKET_NAME}/${videoId} not found.`);
-        } else {
-          console.error(`Error occurred getting video ${BUCKET_NAME}/${videoId} to stream.`);
-          console.error(err.stack);
-        }
-        res.sendStatus(500);
-      });
-    } catch (err) {
-      console.error(`Error thrown while retrieving video ${BUCKET_NAME}/${videoId}.`);
-      console.error(err.stack);
-    }
+    console.log(`Retrieving video from bucket: ${BUCKET_NAME}, key: ${videoId}`);
+    const params = {
+      Bucket: BUCKET_NAME,
+      Key: videoId
+    };
+    client.getObject(params)
+    .promise()
+    .then(data => {
+      console.log(`Retrieved ${BUCKET_NAME}/${videoId} with size ${data.ContentLength}`);
+      //Headers
+      res.set("Content-Length", data.ContentLength)
+         .set("Content-Type", data.ContentType);
+      res.send(data.Body);
+    })
+    .catch(err => {
+      if (err.code === "NoSuchKey") {
+        console.error(`${BUCKET_NAME}/${videoId} not found.`);
+      } else {
+        console.error(`Error thrown while retrieving video ${BUCKET_NAME}/${videoId} to stream.`);
+        console.error(err.stack);
+      }
+      res.sendStatus(500);
+    });
   } else {
     console.log('An "id" term must be provided.');
     res.send({ error: "An 'id' term must be provided." });
