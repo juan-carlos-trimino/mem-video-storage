@@ -10,12 +10,15 @@ const express = require("express");
 //https://cloud.ibm.com/docs/cloud-object-storage?topic=cloud-object-storage-node
 const cos = require("ibm-cos-sdk");
 const stream = require('stream');
+const { randomUUID } = require('crypto');
+const winston = require('winston');
 
 /******
 Globals
 ******/
 //Create a new express instance.
 const app = express();
+const SVC_NAME = "video-storage";
 const BUCKET_NAME = process.env.BUCKET_NAME;
 const AUTHENTICATION_TYPE = process.env.AUTHENTICATION_TYPE;
 const API_KEY = process.env.API_KEY;
@@ -51,10 +54,10 @@ Resume Operation
 The resume operation strategy intercepts unexpected errors and responds by allowing the process to
 continue.
 ***/
-process.on("uncaughtException",
+process.on('uncaughtException',
 err => {
-  console.error("Uncaught exception:");
-  console.error(err && err.stack || err);
+  logger.error(`${SVC_NAME} - Uncaught exception.`);
+  logger.error(err && err.stack || err);
 })
 
 /***
@@ -67,6 +70,19 @@ Abort and Restart
 //   console.error(err && err.stack || err);
 //   process.exit(1);
 // })
+
+//Winston requires at least one transport (location to save the log) to create a log.
+const logConfiguration = {
+  transports: [ new winston.transports.Console() ],
+  format: winston.format.combine(
+    winston.format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss.SSSSS' }),
+    winston.format.printf(msg => `${msg.timestamp} ${msg.level} ${msg.message}`)
+  ),
+  exitOnError: false
+}
+
+//Create a logger and pass it the Winston configuration object.
+const logger = winston.createLogger(logConfiguration);
 
 /***
 Unlike most other programming languages or runtime environments, Node.js doesn't have a built-in
@@ -81,11 +97,11 @@ if (require.main === module) {
   main()
   .then(() => {
     READINESS_PROBE = true;
-    console.log(`Microservice "video-storage" is listening on port "${PORT}"!`);
+    logger.info(`${SVC_NAME} - Microservice is listening on port "${PORT}"!`);
   })
   .catch(err => {
-    console.error('Microservice "video-storage" failed to start.');
-    console.error(err && err.stack || err);
+    logger.error(`${SVC_NAME} - Microservice failed to start.`);
+    logger.error(err && err.stack || err);
   });
 }
 
@@ -116,7 +132,7 @@ function main() {
   }
   //Display a message if any optional environment variables are missing.
   if (process.env.PORT === undefined) {
-    console.log('The environment variable PORT for the "HTTP server" is missing; using port 3000.');
+    logger.info(`${SVC_NAME} - The environment variable PORT for the HTTP server is missing; using port ${PORT}.`);
   }
   //For debugging...
   //console.log(require('util').inspect(CONFIG));
@@ -179,6 +195,7 @@ app.post('/upload',
   const videoId = req.headers.id;
   const mimeType = req.headers['content-type'];
   const contentLength = req.headers['content-length'];
+  const cid = req.headers['X-Correlation-Id'];
   let passThrough = new stream.PassThrough();
   const params = {
     Bucket: BUCKET_NAME,
@@ -187,16 +204,16 @@ app.post('/upload',
     ContentLength: contentLength,
     Body: req.pipe(passThrough)
   };
-  console.log(`Uploading video to bucket: ${BUCKET_NAME}, key: ${videoId}, Content-Type: ${mimeType}, Content-Length: ${contentLength}`);
+  console.log(`${SVC_NAME} ${cid} - Uploading video to bucket: ${BUCKET_NAME}, key: ${videoId}, Content-Type: ${mimeType}, Content-Length: ${contentLength}`);
   client.putObject(params)
   .promise()
   .then(data => {
-    console.log(`Uploaded the video ${videoId}`);
+    logger.info(`${SVC_NAME} ${cid} - Uploaded the video ${videoId}`);
     res.sendStatus(200);
   })
   .catch(err => {
-    console.error(`Upload to COS failed for video ${videoId}.`);
-    console.error(err);
+    logger.error(`${SVC_NAME} ${cid} - Upload to COS failed for video ${videoId}.`);
+    logger.error(`${SVC_NAME} ${cid} - ${err}`);
     res.sendStatus(500);
   });
 });
