@@ -10,7 +10,6 @@ const express = require("express");
 //https://cloud.ibm.com/docs/cloud-object-storage?topic=cloud-object-storage-node
 const cos = require("ibm-cos-sdk");
 const stream = require('stream');
-const { randomUUID } = require('crypto');
 const winston = require('winston');
 
 /******
@@ -57,7 +56,8 @@ continue.
 process.on('uncaughtException',
 err => {
   logger.error(`${SVC_NAME} - Uncaught exception.`);
-  logger.error(err && err.stack || err);
+  logger.error(`${SVC_NAME} - ${err}`);
+  logger.error(`${SVC_NAME} - ${err.stack}`);
 })
 
 /***
@@ -101,7 +101,8 @@ if (require.main === module) {
   })
   .catch(err => {
     logger.error(`${SVC_NAME} - Microservice failed to start.`);
-    logger.error(err && err.stack || err);
+    logger.error(`${SVC_NAME} - ${err}`);
+    logger.error(`${SVC_NAME} - ${err.stack}`);
   });
 }
 
@@ -158,9 +159,10 @@ app.get('/readiness',
 //HTTP GET route to stream a video from COS.
 app.get("/video",
 (req, res) => {
+  const cid = req.headers['X-Correlation-Id'];
   const videoId = req.query.id;
   if (videoId !== undefined) {
-    console.log(`Retrieving video from bucket: ${BUCKET_NAME}, key: ${videoId}`);
+    logger.info(`${SVC_NAME} ${cid} - Retrieving video from bucket: ${BUCKET_NAME}, key: ${videoId}`);
     const params = {
       Bucket: BUCKET_NAME,
       Key: videoId
@@ -168,7 +170,7 @@ app.get("/video",
     client.getObject(params)
     .promise()
     .then(data => {
-      console.log(`Retrieved ${BUCKET_NAME}/${videoId} with size ${data.ContentLength}`);
+      logger.info(`${SVC_NAME} ${cid} - Retrieved ${BUCKET_NAME}/${videoId} with size ${data.ContentLength}`);
       //Headers
       res.set("Content-Length", data.ContentLength)
          .set("Content-Type", data.ContentType);
@@ -176,15 +178,16 @@ app.get("/video",
     })
     .catch(err => {
       if (err.code === "NoSuchKey") {
-        console.error(`${BUCKET_NAME}/${videoId} not found.`);
+        logger.info(`${SVC_NAME} ${cid} - ${BUCKET_NAME}/${videoId} not found.`);
       } else {
-        console.error(`Error thrown while retrieving video ${BUCKET_NAME}/${videoId} to stream.`);
-        console.error(err.stack);
+        logger.error(`${SVC_NAME} ${cid} - Error while retrieving video ${BUCKET_NAME}/${videoId} to stream.`);
+        logger.error(`${SVC_NAME} ${cid} - ${err}`);
+        logger.error(`${SVC_NAME} ${cid} - ${err.stack}`);
       }
       res.sendStatus(500);
     });
   } else {
-    console.log('An "id" term must be provided.');
+    logger.info(`${SVC_NAME} ${cid} - An "id" term must be provided.`);
     res.send({ error: "An 'id' term must be provided." });
   }
 });
@@ -204,7 +207,7 @@ app.post('/upload',
     ContentLength: contentLength,
     Body: req.pipe(passThrough)
   };
-  console.log(`${SVC_NAME} ${cid} - Uploading video to bucket: ${BUCKET_NAME}, key: ${videoId}, Content-Type: ${mimeType}, Content-Length: ${contentLength}`);
+  logger.info(`${SVC_NAME} ${cid} - Uploading video to bucket: ${BUCKET_NAME}, key: ${videoId}, Content-Type: ${mimeType}, Content-Length: ${contentLength}`);
   client.putObject(params)
   .promise()
   .then(data => {
@@ -228,7 +231,7 @@ that none of them responded. All you need to do is add a middleware function at 
 the stack (below all other functions) to handle a 404 response.
 ***/
 app.use((req, res, next) => {
-  console.error(`Unable to find the requested resource (${req.url})!`);
+  logger.error(`${SVC_NAME} - Unable to find the requested resource (${req.url})!`);
   res.status(404).send(`<h1>Unable to find the requested resource (${req.url})!</h1>`);
 });
 
