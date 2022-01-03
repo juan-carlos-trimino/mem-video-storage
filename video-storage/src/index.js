@@ -159,7 +159,12 @@ app.get('/readiness',
 //HTTP GET route to stream a video from COS.
 app.get("/video",
 (req, res) => {
-  const cid = req.headers['X-Correlation-Id'];
+  /***
+  In the HTTP protocol, headers are case-insensitive; however, the Express framework converts
+  everything to lower case. Unfortunately, for objects in JavaScript, their property names are
+  case-sensitive.
+  ***/
+  const cid = req.headers['x-correlation-id'];
   const videoId = req.query.id;
   if (videoId !== undefined) {
     logger.info(`${SVC_NAME} ${cid} - Retrieving video from bucket: ${BUCKET_NAME}, key: ${videoId}`);
@@ -198,7 +203,7 @@ app.post('/upload',
   const videoId = req.headers.id;
   const mimeType = req.headers['content-type'];
   const contentLength = req.headers['content-length'];
-  const cid = req.headers['X-Correlation-Id'];
+  const cid = req.headers['x-correlation-id'];
   let passThrough = new stream.PassThrough();
   const params = {
     Bucket: BUCKET_NAME,
