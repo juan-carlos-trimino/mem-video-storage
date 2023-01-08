@@ -17,7 +17,8 @@ Globals
 ******/
 //Create a new express instance.
 const app = express();
-const SVC_NAME = "video-storage";
+const SVC_NAME = process.env.SVC_NAME;
+const APP_NAME_VER = process.env.APP_NAME_VER;
 const BUCKET_NAME = process.env.BUCKET_NAME;
 const AUTHENTICATION_TYPE = process.env.AUTHENTICATION_TYPE;
 const API_KEY = process.env.API_KEY;
@@ -55,9 +56,9 @@ continue.
 ***/
 process.on('uncaughtException',
 err => {
-  logger.error(`${SVC_NAME} - Uncaught exception.`);
-  logger.error(`${SVC_NAME} - ${err}`);
-  logger.error(`${SVC_NAME} - ${err.stack}`);
+  logger.error('Uncaught exception.', { app:APP_NAME_VER, service:SVC_NAME, msgId:'-1' });
+  logger.error(err, { app:APP_NAME_VER, service:SVC_NAME, msgId:'-1' });
+  logger.error(err.stack, { app:APP_NAME_VER, service:SVC_NAME, msgId:'-1' });
 })
 
 /***
@@ -76,7 +77,7 @@ const logConfiguration = {
   transports: [ new winston.transports.Console() ],
   format: winston.format.combine(
     winston.format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss.SSSSS' }),
-    winston.format.printf(msg => `${msg.timestamp} ${msg.level} ${msg.message}`)
+    winston.format.json()
   ),
   exitOnError: false
 }
@@ -97,12 +98,12 @@ if (require.main === module) {
   main()
   .then(() => {
     READINESS_PROBE = true;
-    logger.info(`${SVC_NAME} - Microservice is listening on port "${PORT}"!`);
+    logger.info(`Microservice is listening on port ${PORT}!`, { app:APP_NAME_VER, service:SVC_NAME, msgId:'-1' });
   })
   .catch(err => {
-    logger.error(`${SVC_NAME} - Microservice failed to start.`);
-    logger.error(`${SVC_NAME} - ${err}`);
-    logger.error(`${SVC_NAME} - ${err.stack}`);
+    logger.error('Microservice failed to start.', { app:APP_NAME_VER, service:SVC_NAME, msgId:'-1' });
+    logger.error(err, { app:APP_NAME_VER, service:SVC_NAME, msgId:'-1' });
+    logger.error(err.stack, { app:APP_NAME_VER, service:SVC_NAME, msgId:'-1' });
   });
 }
 
@@ -133,7 +134,7 @@ function main() {
   }
   //Display a message if any optional environment variables are missing.
   if (process.env.PORT === undefined) {
-    logger.info(`${SVC_NAME} - The environment variable PORT for the HTTP server is missing; using port ${PORT}.`);
+    logger.info(`The environment variable PORT for the HTTP server is missing; using port ${PORT}.`, { app:APP_NAME_VER, service:SVC_NAME, msgId:'-1' });
   }
   //For debugging...
   //console.log(require('util').inspect(CONFIG));
@@ -167,7 +168,7 @@ app.get("/video",
   const cid = req.headers['x-correlation-id'];
   const videoId = req.query.id;
   if (videoId !== undefined) {
-    logger.info(`${SVC_NAME} ${cid} - Retrieving video from bucket: ${BUCKET_NAME}, key: ${videoId}`);
+    logger.info(`Retrieving video from bucket: ${BUCKET_NAME}, key: ${videoId}.`, { app:APP_NAME_VER, service:SVC_NAME, msgId:cid });
     const params = {
       Bucket: BUCKET_NAME,
       Key: videoId
@@ -175,7 +176,7 @@ app.get("/video",
     client.getObject(params)
     .promise()
     .then(data => {
-      logger.info(`${SVC_NAME} ${cid} - Retrieved ${BUCKET_NAME}/${videoId} with size ${data.ContentLength}`);
+      logger.info(`Retrieved ${BUCKET_NAME}/${videoId} with size ${data.ContentLength}.`, { app:APP_NAME_VER, service:SVC_NAME, msgId:cid });
       //Headers
       res.set("Content-Length", data.ContentLength)
          .set("Content-Type", data.ContentType);
@@ -184,16 +185,16 @@ app.get("/video",
     })
     .catch(err => {
       if (err.code === "NoSuchKey") {
-        logger.info(`${SVC_NAME} ${cid} - ${BUCKET_NAME}/${videoId} not found.`);
+        logger.info(`${BUCKET_NAME}/${videoId} not found.`, { app:APP_NAME_VER, service:SVC_NAME, msgId:cid });
       } else {
-        logger.error(`${SVC_NAME} ${cid} - Error while retrieving video ${BUCKET_NAME}/${videoId} to stream.`);
-        logger.error(`${SVC_NAME} ${cid} - ${err}`);
-        logger.error(`${SVC_NAME} ${cid} - ${err.stack}`);
+        logger.error(`Error while retrieving video ${BUCKET_NAME}/${videoId} to stream.`, { app:APP_NAME_VER, service:SVC_NAME, msgId:cid });
+        logger.error(err, { app:APP_NAME_VER, service:SVC_NAME, msgId:cid });
+        logger.error(err.stack, { app:APP_NAME_VER, service:SVC_NAME, msgId:cid });
       }
       res.sendStatus(500);
     });
   } else {
-    logger.info(`${SVC_NAME} ${cid} - An "id" term must be provided.`);
+    logger.info('An id term must be provided.', { app:APP_NAME_VER, service:SVC_NAME, msgId:cid });
     res.send({ error: "An 'id' term must be provided." });
   }
 });
@@ -213,16 +214,16 @@ app.post('/upload',
     ContentLength: contentLength,
     Body: req.pipe(passThrough)
   };
-  logger.info(`${SVC_NAME} ${cid} - Uploading video to bucket: ${BUCKET_NAME}, key: ${videoId}, Content-Type: ${mimeType}, Content-Length: ${contentLength}`);
+  logger.info(`Uploading video to bucket: ${BUCKET_NAME}, key: ${videoId}, Content-Type: ${mimeType}, Content-Length: ${contentLength}.`, { app:APP_NAME_VER, service:SVC_NAME, msgId:cid });
   client.putObject(params)
   .promise()
   .then(data => {
-    logger.info(`${SVC_NAME} ${cid} - Uploaded the video ${videoId}`);
+    logger.info(`Uploaded the video ${videoId}.`, { app:APP_NAME_VER, service:SVC_NAME, msgId:cid });
     res.sendStatus(200);
   })
   .catch(err => {
-    logger.error(`${SVC_NAME} ${cid} - Upload to COS failed for video ${videoId}.`);
-    logger.error(`${SVC_NAME} ${cid} - ${err}`);
+    logger.error(`Upload to COS failed for video ${videoId}.`, { app:APP_NAME_VER, service:SVC_NAME, msgId:cid });
+    logger.error(err, { app:APP_NAME_VER, service:SVC_NAME, msgId:cid });
     res.sendStatus(500);
   });
 });
@@ -237,7 +238,7 @@ that none of them responded. All you need to do is add a middleware function at 
 the stack (below all other functions) to handle a 404 response.
 ***/
 app.use((req, res, next) => {
-  logger.error(`${SVC_NAME} - Unable to find the requested resource (${req.url})!`);
+  logger.error(`Unable to find the requested resource (${req.url})!`, { app:APP_NAME_VER, service:SVC_NAME, msgId:'-1' });
   res.status(404).send(`<h1>Unable to find the requested resource (${req.url})!</h1>`);
 });
 
