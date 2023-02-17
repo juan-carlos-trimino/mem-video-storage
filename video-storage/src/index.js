@@ -56,9 +56,9 @@ continue.
 ***/
 process.on('uncaughtException',
 err => {
-  logger.error('Uncaught exception.', { app:APP_NAME_VER, service:SVC_NAME, msgId:'-1' });
-  logger.error(err, { app:APP_NAME_VER, service:SVC_NAME, msgId:'-1' });
-  logger.error(err.stack, { app:APP_NAME_VER, service:SVC_NAME, msgId:'-1' });
+  logger.error('Uncaught exception.', { app:APP_NAME_VER, service:SVC_NAME, requestId:'-1' });
+  logger.error(err, { app:APP_NAME_VER, service:SVC_NAME, requestId:'-1' });
+  logger.error(err.stack, { app:APP_NAME_VER, service:SVC_NAME, requestId:'-1' });
 })
 
 /***
@@ -74,9 +74,14 @@ Abort and Restart
 
 //Winston requires at least one transport (location to save the log) to create a log.
 const logConfiguration = {
-  transports: [ new winston.transports.Console() ],
+  transports: [
+    new winston.transports.Console()
+  ],
   format: winston.format.combine(
-    winston.format.timestamp(), winston.format.json()
+    winston.format.timestamp({
+      format: 'YYYY-MM-DD hh:mm:ss.SSS'
+    }),
+    winston.format.json()
   ),
   exitOnError: false
 }
@@ -97,12 +102,12 @@ if (require.main === module) {
   main()
   .then(() => {
     READINESS_PROBE = true;
-    logger.info(`Microservice is listening on port ${PORT}!`, { app:APP_NAME_VER, service:SVC_NAME, msgId:'-1' });
+    logger.info(`Microservice is listening on port ${PORT}!`, { app:APP_NAME_VER, service:SVC_NAME, requestId:'-1' });
   })
   .catch(err => {
-    logger.error('Microservice failed to start.', { app:APP_NAME_VER, service:SVC_NAME, msgId:'-1' });
-    logger.error(err, { app:APP_NAME_VER, service:SVC_NAME, msgId:'-1' });
-    logger.error(err.stack, { app:APP_NAME_VER, service:SVC_NAME, msgId:'-1' });
+    logger.error('Microservice failed to start.', { app:APP_NAME_VER, service:SVC_NAME, requestId:'-1' });
+    logger.error(err, { app:APP_NAME_VER, service:SVC_NAME, requestId:'-1' });
+    logger.error(err.stack, { app:APP_NAME_VER, service:SVC_NAME, requestId:'-1' });
   });
 }
 
@@ -133,7 +138,7 @@ function main() {
   }
   //Display a message if any optional environment variables are missing.
   if (process.env.PORT === undefined) {
-    logger.info(`The environment variable PORT for the HTTP server is missing; using port ${PORT}.`, { app:APP_NAME_VER, service:SVC_NAME, msgId:'-1' });
+    logger.info(`The environment variable PORT for the HTTP server is missing; using port ${PORT}.`, { app:APP_NAME_VER, service:SVC_NAME, requestId:'-1' });
   }
   //For debugging...
   //console.log(require('util').inspect(CONFIG));
@@ -167,7 +172,7 @@ app.get("/video",
   const cid = req.headers['x-correlation-id'];
   const videoId = req.query.id;
   if (videoId !== undefined) {
-    logger.info(`Retrieving video from bucket: ${BUCKET_NAME}, key: ${videoId}.`, { app:APP_NAME_VER, service:SVC_NAME, msgId:cid });
+    logger.info(`Retrieving video from bucket: ${BUCKET_NAME}, key: ${videoId}.`, { app:APP_NAME_VER, service:SVC_NAME, requestId:cid });
     const params = {
       Bucket: BUCKET_NAME,
       Key: videoId
@@ -175,7 +180,7 @@ app.get("/video",
     client.getObject(params)
     .promise()
     .then(data => {
-      logger.info(`Retrieved ${BUCKET_NAME}/${videoId} with size ${data.ContentLength}.`, { app:APP_NAME_VER, service:SVC_NAME, msgId:cid });
+      logger.info(`Retrieved ${BUCKET_NAME}/${videoId} with size ${data.ContentLength}.`, { app:APP_NAME_VER, service:SVC_NAME, requestId:cid });
       //Headers
       res.set("Content-Length", data.ContentLength)
          .set("Content-Type", data.ContentType);
@@ -184,16 +189,16 @@ app.get("/video",
     })
     .catch(err => {
       if (err.code === "NoSuchKey") {
-        logger.info(`${BUCKET_NAME}/${videoId} not found.`, { app:APP_NAME_VER, service:SVC_NAME, msgId:cid });
+        logger.info(`${BUCKET_NAME}/${videoId} not found.`, { app:APP_NAME_VER, service:SVC_NAME, requestId:cid });
       } else {
-        logger.error(`Error while retrieving video ${BUCKET_NAME}/${videoId} to stream.`, { app:APP_NAME_VER, service:SVC_NAME, msgId:cid });
-        logger.error(err, { app:APP_NAME_VER, service:SVC_NAME, msgId:cid });
-        logger.error(err.stack, { app:APP_NAME_VER, service:SVC_NAME, msgId:cid });
+        logger.error(`Error while retrieving video ${BUCKET_NAME}/${videoId} to stream.`, { app:APP_NAME_VER, service:SVC_NAME, requestId:cid });
+        logger.error(err, { app:APP_NAME_VER, service:SVC_NAME, requestId:cid });
+        logger.error(err.stack, { app:APP_NAME_VER, service:SVC_NAME, requestId:cid });
       }
       res.sendStatus(500);
     });
   } else {
-    logger.info('An id term must be provided.', { app:APP_NAME_VER, service:SVC_NAME, msgId:cid });
+    logger.info('An id term must be provided.', { app:APP_NAME_VER, service:SVC_NAME, requestId:cid });
     res.send({ error: "An 'id' term must be provided." });
   }
 });
@@ -213,16 +218,16 @@ app.post('/upload',
     ContentLength: contentLength,
     Body: req.pipe(passThrough)
   };
-  logger.info(`Uploading video to bucket: ${BUCKET_NAME}, key: ${videoId}, Content-Type: ${mimeType}, Content-Length: ${contentLength}.`, { app:APP_NAME_VER, service:SVC_NAME, msgId:cid });
+  logger.info(`Uploading video to bucket: ${BUCKET_NAME}, key: ${videoId}, Content-Type: ${mimeType}, Content-Length: ${contentLength}.`, { app:APP_NAME_VER, service:SVC_NAME, requestId:cid });
   client.putObject(params)
   .promise()
   .then(data => {
-    logger.info(`Uploaded the video ${videoId}.`, { app:APP_NAME_VER, service:SVC_NAME, msgId:cid });
+    logger.info(`Uploaded the video ${videoId}.`, { app:APP_NAME_VER, service:SVC_NAME, requestId:cid });
     res.sendStatus(200);
   })
   .catch(err => {
-    logger.error(`Upload to COS failed for video ${videoId}.`, { app:APP_NAME_VER, service:SVC_NAME, msgId:cid });
-    logger.error(err, { app:APP_NAME_VER, service:SVC_NAME, msgId:cid });
+    logger.error(`Upload to COS failed for video ${videoId}.`, { app:APP_NAME_VER, service:SVC_NAME, requestId:cid });
+    logger.error(err, { app:APP_NAME_VER, service:SVC_NAME, requestId:cid });
     res.sendStatus(500);
   });
 });
@@ -237,7 +242,7 @@ that none of them responded. All you need to do is add a middleware function at 
 the stack (below all other functions) to handle a 404 response.
 ***/
 app.use((req, res, next) => {
-  logger.error(`Unable to find the requested resource (${req.url})!`, { app:APP_NAME_VER, service:SVC_NAME, msgId:'-1' });
+  logger.error(`Unable to find the requested resource (${req.url})!`, { app:APP_NAME_VER, service:SVC_NAME, requestId:'-1' });
   res.status(404).send(`<h1>Unable to find the requested resource (${req.url})!</h1>`);
 });
 
